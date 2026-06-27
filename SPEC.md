@@ -100,22 +100,20 @@ A patient enters their insurance ID and a description of their symptoms. The app
 ---
 
 ## Cost estimation logic
+For each matched CPT code, get the base_price, and sum them all together in total_price.
 
-For each matched CPT code, calculate what the patient owes:
+Then, calculate what the patient owes:
 
 ```
 remaining_deductible = plan.deductible - plan.deductible_met
 
-if base_price <= remaining_deductible:
-    patient_owes = base_price
+if total_price <= remaining_deductible:
+    total_estimated_cost = total_price
 else:
-    above_deductible = base_price - remaining_deductible
-    patient_owes = remaining_deductible + (above_deductible * plan.copay_pct)
-
-patient_owes = min(patient_owes, plan.out_of_pocket_max)
+    above_deductible = total_price - remaining_deductible
+    total_estimated_cost = remaining_deductible + (above_deductible * plan.copay_pct)
+    total_estimated_cost = min(total_estimated_cost, out_of_pocket_max)
 ```
-
-`total_estimated_cost` = sum of `patient_owes` across all matched codes.
 
 ---
 

@@ -38,10 +38,10 @@ app.post('/api/estimate', (req, res) => {
       code: cpt.code,
       description: cpt.description,
       base_price: cpt.base_price,
-      patient_owes: estimatePatientOwes(patient, cpt.base_price),
     }));
 
-  const total_estimated_cost = matched_codes.reduce((sum, c) => sum + c.patient_owes, 0);
+  const total_price = matched_codes.reduce((sum, c) => sum + c.base_price, 0);
+  const total_estimated_cost = estimatePatientOwes(patient, total_price);
 
   res.json({
     patient_name: patient.patient_name,
