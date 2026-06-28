@@ -1,9 +1,7 @@
 # Insurance Cost Estimator — Project Spec
 
 ## What this app does
-
-A patient enters their insurance ID and a description of their symptoms. The app looks up their insurance plan, matches their symptoms to relevant CPT (medical procedure) codes, and returns an estimated out-of-pocket cost based on their plan's deductible, copay percentage, and out-of-pocket maximum.
-
+A patient logs in and enters a description of their symptoms. The app looks up their insurance plan from their account, matches their symptoms to relevant CPT codes, and returns an estimated out-of-pocket cost.
 ---
 
 ## Tech stack
@@ -21,14 +19,18 @@ A patient enters their insurance ID and a description of their symptoms. The app
 ```
 /
 ├── SPEC.md
-├── client/          # React frontend (Vite)
+├── client/
 │   └── src/
 │       ├── App.jsx
+│       ├── LoginPage.jsx
+│       ├── SymptomsPage.jsx
 │       └── main.jsx
-├── server/          # Express backend
-│   ├── index.js     # Server entry point, route definitions
-│   ├── db.js        # Database connection + seed data
-│   └── estimate.js  # Cost estimation logic
+├── server/
+│   ├── index.js
+│   ├── db.js
+│   ├── estimate.js
+│   ├── SPEC_db.md
+│   └── SPEC_estimate.md
 └── package.json
 ```
 
@@ -61,20 +63,48 @@ A patient enters their insurance ID and a description of their symptoms. The app
 | keywords    | TEXT | Comma-separated symptom words for matching     |
 | base_price  | REAL | Standard procedure price before insurance      |
 
+### `users`
+| Column       | Type | Notes                          |
+|--------------|------|--------------------------------|
+| user_id      | TEXT | Primary key                    |
+| username     | TEXT | Unique                         |
+| password     | TEXT | Hashed, never plaintext        |
+| insurance_id | TEXT | Foreign key → patients         |
+
 ---
+
+## Frontend Pages
+- `/login` — login form, redirects to /symptoms on success
+- `/symptoms` — symptoms input form, requires active session, 
+   redirects to /login if not authenticated
 
 ## API endpoints
 
+### `POST /api/login`
+**Request body:**
+```json
+{ "username": "jsmith", "password": "password123" }
+```
+**Response:**
+- `200` — login successful, session cookie set
+- `401` — invalid credentials
+---
+ 
+### `POST /api/logout`
+**Request body:** none
+**Response:**
+- `200` — session cleared
+---
+
 ### `POST /api/estimate`
+Requires active session. Returns `401` if not authenticated.
+The insurance_id is retrieved server-side from the session — 
+it is never supplied by the client.
 
 **Request body:**
 ```json
-{
-  "insurance_id": "INS-001",
-  "symptoms": "chest pain and shortness of breath"
-}
+{ "symptoms": "chest pain and shortness of breath" }
 ```
-
 **Response:**
 ```json
 {
@@ -84,69 +114,10 @@ A patient enters their insurance ID and a description of their symptoms. The app
     {
       "code": "99213",
       "description": "Office visit",
-      "base_price": 150.00,
-      "patient_owes": 87.50
+      "base_price": 150.00
     }
   ],
   "total_estimated_cost": 87.50
 }
 ```
-
-**Error responses:**
-- `404` — insurance ID not found
-- `400` — missing fields
-- `200` with empty `matched_codes` — no CPT codes matched the symptoms
-
----
-
-## Cost estimation logic
-For each matched CPT code, get the base_price, and sum them all together in total_price.
-
-Then, calculate what the patient owes:
-
-```
-remaining_deductible = plan.deductible - plan.deductible_met
-
-if total_price <= remaining_deductible:
-    total_estimated_cost = total_price
-else:
-    above_deductible = total_price - remaining_deductible
-    total_estimated_cost = remaining_deductible + (above_deductible * plan.copay_pct)
-    total_estimated_cost = min(total_estimated_cost, out_of_pocket_max)
-```
-
----
-
-## Symptom → CPT matching logic
-
-Split the symptoms string into individual words. For each CPT code, check if any keyword in its `keywords` column appears in the symptoms string. Return all codes with at least one match.
-
-Example: symptoms = `"chest pain"` matches a CPT code with keywords `"chest, pain, cardiac"`.
-
----
-
-## Seed data (for development)
-
-### Patients
-| insurance_id | name          | plan_id  |
-|--------------|---------------|----------|
-| INS-001      | Jane Smith    | PLAN-A   |
-| INS-002      | Carlos Rivera | PLAN-B   |
-| INS-003      | Amy Chen      | PLAN-C   |
-
-### Insurance plans
-| plan_id | plan_name         | deductible | deductible_met | copay_pct | out_of_pocket_max |
-|---------|-------------------|------------|----------------|-----------|-------------------|
-| PLAN-A  | BlueCross Silver  | 1000       | 800            | 0.20      | 3000              |
-| PLAN-B  | Aetna Bronze      | 3000       | 200            | 0.40      | 6000              |
-| PLAN-C  | United Gold       | 500        | 500            | 0.10      | 1500              |
-
-### CPT codes (sample)
-| code  | description              | keywords                        | base_price |
-|-------|---------------------------|---------------------------------|------------|
-| 99213 | Office visit (est. pt.)   | pain, visit, consult, ache      | 150        |
-| 93000 | Electrocardiogram (ECG)   | chest, heart, cardiac, palpitation | 200     |
-| 71046 | Chest X-ray               | chest, cough, breath, lung      | 300        |
-| 80053 | Metabolic panel (blood)   | fatigue, dizzy, nausea, blood   | 180        |
-| 99203 | Office visit (new pt.)    | new, first, initial, visit      | 220        |
-| 97110 | Therapeutic exercise      | knee, back, shoulder, joint, pain | 120      |
+Requires active session. Returns `401` if not authenticated.
