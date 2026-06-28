@@ -5,17 +5,14 @@ A patient logs in and enters a description of their symptoms. The app looks up t
 ---
 
 ## Tech stack
-
 | Layer    | Tech                        |
 |----------|-----------------------------|
 | Frontend | React (Vite)                |
 | Backend  | Node.js + Express           |
 | Database | SQLite via `better-sqlite3` |
-
 ---
 
 ## Folder structure
-
 ```
 /
 ├── SPEC.md
@@ -33,44 +30,6 @@ A patient logs in and enters a description of their symptoms. The app looks up t
 │   └── SPEC_estimate.md
 └── package.json
 ```
-
----
-
-## Database schema
-
-### `patients`
-| Column       | Type | Notes                     |
-|--------------|------|---------------------------|
-| insurance_id | TEXT | Primary key               |
-| name         | TEXT |                           |
-| plan_id      | TEXT | Foreign key → insurance_plans |
-
-### `insurance_plans`
-| Column          | Type | Notes                            |
-|-----------------|------|----------------------------------|
-| plan_id         | TEXT | Primary key                      |
-| plan_name       | TEXT |                                  |
-| deductible      | REAL | Total annual deductible          |
-| deductible_met  | REAL | Amount already paid this year    |
-| copay_pct       | REAL | Patient's share after deductible (0.0–1.0) |
-| out_of_pocket_max | REAL | Maximum patient pays per year  |
-
-### `cpt_codes`
-| Column      | Type | Notes                                          |
-|-------------|------|------------------------------------------------|
-| code        | TEXT | Primary key (e.g. "99213")                     |
-| description | TEXT | Human-readable name                            |
-| keywords    | TEXT | Comma-separated symptom words for matching     |
-| base_price  | REAL | Standard procedure price before insurance      |
-
-### `users`
-| Column       | Type | Notes                          |
-|--------------|------|--------------------------------|
-| user_id      | TEXT | Primary key                    |
-| username     | TEXT | Unique                         |
-| password     | TEXT | Hashed, never plaintext        |
-| insurance_id | TEXT | Foreign key → patients         |
-
 ---
 
 ## Frontend Pages
