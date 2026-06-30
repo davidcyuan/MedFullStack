@@ -1,13 +1,48 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model InsurancePlan {
+  plan_id           String    @id
+  plan_name         String
+  deductible        Float
+  deductible_met    Float
+  copay_pct         Float
+  out_of_pocket_max Float
+  patients          Patient[]
+
+  @@map("insurance_plans")
+}
+
+model Patient {
+  insurance_id String        @id
+  name         String
+  plan_id      String
+  plan         InsurancePlan @relation(fields: [plan_id], references: [plan_id])
+  users        User[]
+
+  @@map("patients")
+}
+
+model CptCode {
+  code        String @id
+  description String
+  keywords    String
+  base_price  Float
+
+  @@map("cpt_codes")
+}
+
+model User {
+  user_id      String  @id
+  username     String  @unique
+  password     String
+  insurance_id String
+  patient      Patient @relation(fields: [insurance_id], references: [insurance_id])
+
+  @@map("users")
 }

@@ -9,7 +9,7 @@ A patient logs in and enters a description of their symptoms. The app looks up t
 |----------|-----------------------------|
 | Frontend | React (Vite)                |
 | Backend  | Node.js + Express           |
-| Database | SQLite via `better-sqlite3` |
+| Database | Postgres on AWS RDS         |
 ---
 
 ## Folder structure
@@ -26,8 +26,7 @@ A patient logs in and enters a description of their symptoms. The app looks up t
 │   ├── index.js
 │   ├── db.js
 │   ├── estimate.js
-│   ├── SPEC_db.md
-│   └── SPEC_estimate.md
+│   ├── SPEC_backend.md
 └── package.json
 ```
 ---

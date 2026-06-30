@@ -1,9 +1,11 @@
 # Insurance Cost Estimator — Backend Spec
 
 ## Overview
-Backend implementation details for the Insurance Cost Estimator. This spec is intended to be read alongside SPEC.md.
+Backend implementation details for the Insurance Cost Estimator. Includes implementation of APIs, as well as connection to database. This spec is intended to be read alongside SPEC.md.
 
 ## Database schema
+
+Database: PostgreSQL (AWS RDS), accessed via Prisma ORM. Connection configured via `DATABASE_URL` in `.env`.
 
 ### `patients`
 | Column       | Type | Notes                     |

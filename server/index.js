@@ -1,25 +1,24 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./db');
+const prisma = require('./db');
 const estimatePatientOwes = require('./estimate');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/api/estimate', (req, res) => {
+app.post('/api/estimate', async (req, res) => {
   const { insurance_id, symptoms } = req.body;
 
   if (!insurance_id || !symptoms) {
     return res.status(400).json({ error: 'Missing insurance_id or symptoms' });
   }
 
-  const patient = db.prepare(`
-    SELECT p.name AS patient_name, ip.*
-    FROM patients p
-    JOIN insurance_plans ip ON p.plan_id = ip.plan_id
-    WHERE p.insurance_id = ?
-  `).get(insurance_id);
+  const patient = await prisma.patient.findUnique({
+    where: { insurance_id },
+    include: { plan: true },
+  });
 
   if (!patient) {
     return res.status(404).json({ error: 'Insurance ID not found' });
@@ -27,7 +26,7 @@ app.post('/api/estimate', (req, res) => {
 
   const symptomWords = symptoms.toLowerCase().split(/\W+/).filter(Boolean);
 
-  const allCodes = db.prepare('SELECT * FROM cpt_codes').all();
+  const allCodes = await prisma.cptCode.findMany();
 
   const matched_codes = allCodes
     .filter(cpt => {
@@ -41,11 +40,11 @@ app.post('/api/estimate', (req, res) => {
     }));
 
   const total_price = matched_codes.reduce((sum, c) => sum + c.base_price, 0);
-  const total_estimated_cost = estimatePatientOwes(patient, total_price);
+  const total_estimated_cost = estimatePatientOwes(patient.plan, total_price);
 
   res.json({
-    patient_name: patient.patient_name,
-    plan_name: patient.plan_name,
+    patient_name: patient.name,
+    plan_name: patient.plan.plan_name,
     matched_codes,
     total_estimated_cost,
   });
